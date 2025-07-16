@@ -1,0 +1,13 @@
+streamlit
+wikipedia
+arxiv
+PyMuPDF
+faiss-cpu
+sentence-transformers
+transformers
+torch
+torchvision
+newspaper3k
+lxml-html-clean
+youtube-transcript-api
+duckduckgo-search
