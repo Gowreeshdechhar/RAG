@@ -1,3 +1,4 @@
+# Core RAG dependencies
 streamlit
 wikipedia
 arxiv
@@ -11,3 +12,10 @@ newspaper3k
 lxml-html-clean
 youtube-transcript-api
 duckduckgo-search
+
+# Hand & Voice Control dependencies
+opencv-python
+mediapipe
+pyautogui
+pynput
+SpeechRecognition

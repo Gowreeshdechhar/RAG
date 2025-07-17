@@ -1,4 +1,7 @@
 # app.py
+import subprocess
+import os
+
 import streamlit as st
 import arxiv
 import wikipedia
@@ -54,6 +57,18 @@ else:
     uploaded_pdf = None
 
 # Chat input
+import subprocess
+import os
+
+st.sidebar.markdown("---")
+if st.sidebar.button("🎮 Turn On Hand and Voice Command"):
+    script_path = os.path.join(os.getcwd(), "hand_voice_control.py")
+    try:
+        subprocess.Popen(["python", script_path], shell=True)
+        st.sidebar.success("🟢 Hand & Voice Control Activated")
+    except Exception as e:
+        st.sidebar.error(f"❌ Failed to run hand_voice_control.py: {e}")
+
 user_input = st.chat_input("Ask something...")
 
 if user_input is not None and user_input.strip() != "":
