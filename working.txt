@@ -1,0 +1,33 @@
+🛠️ How to Use in VS Code
+✅ Step 1: Open Project Folder
+Create a folder in VS Code (e.g., voice_ai_project) and place the two files inside.
+
+✅ Step 2: Set Up Virtual Environment
+bash
+Copy
+Edit
+python -m venv venv
+.\venv\Scripts\activate
+pip install -r requirements.txt
+✅ Step 3: Add Your OpenAI API Key
+In voice_assistant_advanced.py, replace this line:
+
+python
+Copy
+Edit
+openai.api_key = "your-openai-api-key"
+with your actual OpenAI API key.
+
+✅ Step 4: Run the Assistant
+bash
+Copy
+Edit
+python voice_assistant_advanced.py
+Now you can:
+
+Speak into the mic 🎤
+
+Get ChatGPT’s reply 🤖
+
+Hear a realistic voice response 🗣️
+
