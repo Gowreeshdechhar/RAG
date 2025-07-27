@@ -85,15 +85,33 @@ if len(st.session_state.history) > 0 and "answer" not in st.session_state.histor
         summarized_context = summarize_text(raw_context, summarizer)
         prompt = f"Context: {summarized_context}\n\nQuestion: {latest_question}\nAnswer:"
     elif source == "YouTube Video (Summarized)":
+        # Extract video ID from URL
         parsed_url = urlparse(latest_question)
-        video_id = parse_qs(parsed_url.query).get("v", [""])[0] if "youtube" in latest_question else latest_question
-        raw_context = get_youtube_transcript(video_id)
-        if "Error" not in raw_context:
-            summarized_context = summarize_text(raw_context, summarizer)
-            prompt = f"Summary of YouTube video: {summarized_context}\n\nQuestion: {latest_question}\nAnswer:"
+        video_id = None
+        if "youtube.com" in parsed_url.netloc or "youtu.be" in parsed_url.netloc:
+            if "youtu.be" in parsed_url.netloc:
+                video_id = parsed_url.path.lstrip("/")
+            elif "youtube.com" in parsed_url.netloc:
+                query_params = parse_qs(parsed_url.query)
+                video_id = query_params.get("v", [None])[0]
+        
+        # Fallback: treat input as video ID if no valid URL
+        if not video_id or len(video_id) != 11:
+            video_id = latest_question.strip() if len(latest_question.strip()) == 11 else None
+
+        if video_id:
+            raw_context = get_youtube_transcript(video_id)
+            if "Error" not in raw_context:
+                summarized_context = summarize_text(raw_context, summarizer)
+                prompt = f"Summary of YouTube video: {summarized_context}\n\nQuestion: {latest_question}\nAnswer:"
+            else:
+                summarized_context = f"No transcript available for video ID: {video_id}"
+                prompt = f"Context: {summarized_context}\n\nQuestion: {latest_question}\nAnswer:"
+                st.error(summarized_context)
         else:
-            summarized_context = raw_context
+            summarized_context = "Invalid YouTube URL or video ID. Please provide a valid YouTube link or 11-character video ID."
             prompt = f"Context: {summarized_context}\n\nQuestion: {latest_question}\nAnswer:"
+            st.error(summarized_context)
     elif source == "Web Search":
         raw_context = search_web(latest_question)
         summarized_context = summarize_text(raw_context, summarizer)
@@ -107,6 +125,7 @@ if len(st.session_state.history) > 0 and "answer" not in st.session_state.histor
         raw_context = "[No valid source selected.]"
         summarized_context = raw_context
         prompt = f"Context: {summarized_context}\n\nQuestion: {latest_question}\nAnswer:"
+        st.error(summarized_context)
 
     answer = generate_response(prompt, rag_model)
     st.session_state.history[-1]["answer"] = answer
