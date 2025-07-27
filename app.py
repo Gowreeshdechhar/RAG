@@ -1,7 +1,5 @@
-# app.py
 import subprocess
 import os
-
 import streamlit as st
 import arxiv
 import wikipedia
@@ -11,7 +9,6 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from transformers import pipeline
 from urllib.parse import urlparse, parse_qs
-
 from rag_utils import (
     get_wikipedia_content,
     get_arxiv_content,
@@ -41,7 +38,7 @@ def load_models():
 embedder, rag_model, summarizer = load_models()
 
 source = st.sidebar.selectbox("Choose a source", [
-    "Wikipedia", "arXiv", "PDF Upload", "News Article", "YouTube Video", "Web Search"])
+    "Wikipedia", "arXiv", "PDF Upload", "News Article", "YouTube Video (Summarized)", "Web Search"])
 
 # Handle PDF upload
 if source == "PDF Upload":
@@ -57,9 +54,6 @@ else:
     uploaded_pdf = None
 
 # Chat input
-import subprocess
-import os
-
 st.sidebar.markdown("---")
 if st.sidebar.button("🎮 Turn On Hand and Voice Command"):
     script_path = os.path.join(os.getcwd(), "hand_voice_control.py")
@@ -75,30 +69,45 @@ if user_input is not None and user_input.strip() != "":
     st.session_state.history.append({"user": user_input})
     st.rerun()
 
-
 if len(st.session_state.history) > 0 and "answer" not in st.session_state.history[-1]:
     latest_question = st.session_state.history[-1]["user"]
 
     if source == "Wikipedia":
         raw_context = get_wikipedia_content(latest_question.split()[0])
+        summarized_context = summarize_text(raw_context, summarizer)
+        prompt = f"Context: {summarized_context}\n\nQuestion: {latest_question}\nAnswer:"
     elif source == "arXiv":
         raw_context = get_arxiv_content(latest_question)
+        summarized_context = summarize_text(raw_context, summarizer)
+        prompt = f"Context: {summarized_context}\n\nQuestion: {latest_question}\nAnswer:"
     elif source == "News Article":
         raw_context = get_news_article(latest_question)
-    elif source == "YouTube Video":
+        summarized_context = summarize_text(raw_context, summarizer)
+        prompt = f"Context: {summarized_context}\n\nQuestion: {latest_question}\nAnswer:"
+    elif source == "YouTube Video (Summarized)":
         parsed_url = urlparse(latest_question)
         video_id = parse_qs(parsed_url.query).get("v", [""])[0] if "youtube" in latest_question else latest_question
         raw_context = get_youtube_transcript(video_id)
+        if "Error" not in raw_context:
+            summarized_context = summarize_text(raw_context, summarizer)
+            prompt = f"Summary of YouTube video: {summarized_context}\n\nQuestion: {latest_question}\nAnswer:"
+        else:
+            summarized_context = raw_context
+            prompt = f"Context: {summarized_context}\n\nQuestion: {latest_question}\nAnswer:"
     elif source == "Web Search":
         raw_context = search_web(latest_question)
+        summarized_context = summarize_text(raw_context, summarizer)
+        prompt = f"Context: {summarized_context}\n\nQuestion: {latest_question}\nAnswer:"
     elif source == "PDF Upload" and uploaded_pdf:
         relevant = retrieve_relevant_chunks(latest_question, pdf_chunks, pdf_embeddings, embedder)
         raw_context = "\n".join(relevant)
+        summarized_context = summarize_text(raw_context, summarizer)
+        prompt = f"Context: {summarized_context}\n\nQuestion: {latest_question}\nAnswer:"
     else:
         raw_context = "[No valid source selected.]"
+        summarized_context = raw_context
+        prompt = f"Context: {summarized_context}\n\nQuestion: {latest_question}\nAnswer:"
 
-    summarized_context = summarize_text(raw_context, summarizer)
-    prompt = f"Context: {summarized_context}\n\nQuestion: {latest_question}\nAnswer:"
     answer = generate_response(prompt, rag_model)
     st.session_state.history[-1]["answer"] = answer
 
